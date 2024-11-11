@@ -11,9 +11,14 @@ function Cadastro() {
   const roleRef = useRef();
   const registrationNumberRef = useRef();
   const [role, setRole] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setIsLoading(true);
+    setErrorMessage(""); // Limpa mensagens de erro anteriores
+
     const data = {
       name: nameRef.current.value,
       email: emailRef.current.value,
@@ -28,28 +33,64 @@ function Cadastro() {
     try {
       await api.post("/register", data);
       alert("Cadastro realizado com sucesso");
+      // Limpar campos após o sucesso
+      nameRef.current.value = "";
+      emailRef.current.value = "";
+      passwordRef.current.value = "";
+      roleRef.current.value = "";
+      setRole("");
+      if (registrationNumberRef.current) {
+        registrationNumberRef.current.value = "";
+      }
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
-      alert("Erro ao cadastrar");
-    }
-    nameRef.current.value = "";
-    emailRef.current.value = "";
-    passwordRef.current.value = "";
-    roleRef.current.value = "";
-    if (role === "teacher" && registrationNumberRef.current) {
-      registrationNumberRef.current.value = "";
+
+      if (error.response) {
+        // Verificar se o erro é relacionado ao email já cadastrado
+        if (
+          error.response.status === 400 &&
+          error.response.data.error === "Email already in use"
+        ) {
+          setErrorMessage("Este email já está cadastrado.");
+        } else {
+          // Outros erros retornados pela API
+          setErrorMessage(
+            error.response.data.message ||
+              "Erro ao cadastrar. Verifique os dados e tente novamente."
+          );
+        }
+      } else if (error.request) {
+        // Erro na conexão com o servidor
+        setErrorMessage(
+          "Não foi possível conectar ao servidor. Tente novamente mais tarde."
+        );
+      } else {
+        // Outros erros
+        setErrorMessage("Erro inesperado. Tente novamente.");
+      }
+    } finally {
+      emailRef.current.value = "";
+      passwordRef.current.value = "";
+      setIsLoading(false);
     }
   }
 
   function handleRoleChange(event) {
     setRole(event.target.value);
+    setErrorMessage(""); // Limpa mensagens de erro ao mudar o papel
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-black to-gray-800 flex items-center justify-center">
-      <div className="max-w-md mx-autobg-gradient-to-r from-black to-gray-800 p-8 border border-gray-300 rounded-lg shadow-lg">
-      <img src={TeenTechLogo} alt="Logo Teen Tech" className="w-1/2 mx-auto pb-5" />
-        <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">Cadastro</h2>
+      <div className="max-w-md mx-auto bg-gradient-to-r from-black to-gray-800 p-8 border border-gray-300 rounded-lg shadow-lg">
+        <img
+          src={TeenTechLogo}
+          alt="Logo Teen Tech"
+          className="w-1/2 mx-auto pb-5"
+        />
+        <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">
+          Cadastro
+        </h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <div className="relative flex items-center">
             <FaUser className="absolute left-3 text-gray-500" />
@@ -115,11 +156,20 @@ function Cadastro() {
             </div>
           )}
 
-          <button className="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-700 transition duration-200">
-            Cadastrar-se
+          <button
+            className="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-700 transition duration-200"
+            disabled={isLoading}
+          >
+            {isLoading ? "Cadastrando..." : "Cadastrar-se"}
           </button>
+          {errorMessage && (
+            <p className="text-red-500 text-center mt-2">{errorMessage}</p>
+          )}
         </form>
-        <Link to="/login" className="text-blue-400 hover:underline block text-center pt-4">
+        <Link
+          to="/login"
+          className="text-blue-400 hover:underline block text-center pt-4"
+        >
           Já tem uma conta? Faça seu login
         </Link>
       </div>
