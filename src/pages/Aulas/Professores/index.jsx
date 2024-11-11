@@ -10,7 +10,7 @@ function UploadAulas() {
   const [lessons, setLessons] = useState([]);
   const [selectedLesson, setSelectedLesson] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // Inicializando com null
+  const [error, setError] = useState(null); 
 
   useEffect(() => {
     async function fetchLessons() {
@@ -86,7 +86,7 @@ function UploadAulas() {
           (error.response ? error.response.data.error : error.message)
       );
     } finally {
-      setLoading(false); // Encerra o carregamento
+      setLoading(false); 
     }
   }
 
